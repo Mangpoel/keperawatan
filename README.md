@@ -1,0 +1,1 @@
+    echo "# Proyek Keperawatan" > README.md
