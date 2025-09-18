@@ -38,7 +38,7 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Cari user
+    // Cari user aktif
     const [rows] = await db.query(
       `SELECT * FROM user WHERE username = ? AND status = 1`,
       [username]
@@ -56,22 +56,39 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
+    // Ambil data pegawai berdasarkan kode_pegawai user
+    const [pegawaiData] = await db.query(
+      `SELECT p.kode_pegawai, p.nama_pegawai, p.unit_id, u.nama_unit
+       FROM pegawai p
+       LEFT JOIN unit u ON p.unit_id = u.unit_id
+       WHERE p.kode_pegawai = ?`,
+      [user.kode_pegawai]
+    );
+
+    const pegawai = pegawaiData.length > 0 ? pegawaiData[0] : null;
 
     // Generate JWT
     const token = jwt.sign(
       { id: user.id, role: user.role, kode_pegawai: user.kode_pegawai },
-      process.env.JWT_SECRET || "secret_key",  // pakai .env lebih aman
+      process.env.JWT_SECRET || "secret_key",
       { expiresIn: "1h" }
     );
 
-    res.json({ 
-      message: "Login successful", 
-      token 
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        kode_pegawai: user.kode_pegawai,
+        pegawai: pegawai, // data dari tabel pegawai
+      },
     });
   } catch (err) {
-    res.status(500).json({ 
-      message: "Error logging in", 
-      error: err.message 
+    res.status(500).json({
+      message: "Error logging in",
+      error: err.message,
     });
   }
 };

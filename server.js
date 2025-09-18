@@ -9,6 +9,7 @@ const logbookRoutes = require('./routes/logbookRoutes');
 const logbookDetailRoutes = require('./routes/logbookDetailRoutes');
 const userRoutes = require("./routes/userRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.use('/api/logbook', logbookRoutes);
 app.use('/api/logbook-detail', logbookDetailRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 const PORT = 5000;

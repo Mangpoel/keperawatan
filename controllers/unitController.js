@@ -30,8 +30,8 @@ exports.getAllUnit = async (req, res) => {
 // READ ONE
 exports.getUnitById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const [rows] = await db.query(`SELECT * FROM unit WHERE id = ? AND status = 1`, [id]);
+    const { unitId } = req.params;
+    const [rows] = await db.query(`SELECT * FROM unit WHERE unit_id = ? AND status = 1`, [unitId]);
 
     if (rows.length === 0) return res.status(404).json({ message: "Unit not found" });
     res.json(rows[0]);
@@ -43,12 +43,12 @@ exports.getUnitById = async (req, res) => {
 // UPDATE
 exports.updateUnit = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { unitId } = req.params;
     const { nama_unit, divisi, kode_kaunit, nama_kaunit } = req.body;
 
     const [result] = await db.query(
-      `UPDATE unit SET nama_unit=?, divisi=?, kode_kaunit=?, nama_kaunit=?, updated_at=NOW() WHERE id=? AND status=1`,
-      [nama_unit, divisi, kode_kaunit, nama_kaunit, id]
+      `UPDATE unit SET nama_unit=?, divisi=?, kode_kaunit=?, nama_kaunit=?, updated_at=NOW() WHERE unit_id=? AND status=1`,
+      [nama_unit, divisi, kode_kaunit, nama_kaunit, unitId]
     );
 
     if (result.affectedRows === 0) return res.status(404).json({ message: "Unit not found" });
@@ -61,10 +61,10 @@ exports.updateUnit = async (req, res) => {
 // DELETE (soft delete → ubah status jadi 0)
 exports.deleteUnit = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { unitId } = req.params;
     const [result] = await db.query(
-      `UPDATE unit SET status=0, updated_at=NOW() WHERE id=?`,
-      [id]
+      `UPDATE unit SET status=0, updated_at=NOW() WHERE unit_id=?`,
+      [unitId]
     );
 
     if (result.affectedRows === 0) return res.status(404).json({ message: "Unit not found" });

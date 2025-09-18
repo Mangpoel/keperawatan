@@ -65,8 +65,9 @@ exports.getLogbookRekap = async (req, res) => {
     let query = `
       SELECT 
         l.logbook_id,
-        l.kode_pegawai,
+        p.kode_pegawai,
         p.nama_pegawai,
+        u.nama_unit,
         l.tahun,
         l.bulan,
         k.id AS kompetensi_id,
@@ -79,6 +80,7 @@ exports.getLogbookRekap = async (req, res) => {
         COUNT(d.id) AS total_detail
       FROM logbook l
       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+      LEFT JOIN unit u ON p.unit_id = u.unit_id
       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
       JOIN kompetensi k ON d.kompetensi_id = k.id
       WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
@@ -87,7 +89,7 @@ exports.getLogbookRekap = async (req, res) => {
     const params = [];
 
     if (kode_pegawai) {
-      query += " AND l.kode_pegawai = ?";
+      query += " AND p.kode_pegawai = ?";
       params.push(kode_pegawai);
     }
     if (bulan) {
@@ -101,7 +103,7 @@ exports.getLogbookRekap = async (req, res) => {
 
     query += `
       GROUP BY 
-        l.logbook_id, l.kode_pegawai, p.nama_pegawai, l.tahun, l.bulan,
+        l.logbook_id, p.kode_pegawai, p.nama_pegawai, u.nama_unit, l.tahun, l.bulan,
         k.id, k.kategori, k.uraian, k.bobot, k.target_tahun
       ORDER BY l.tahun DESC, l.bulan DESC, l.logbook_id ASC
     `;
@@ -117,7 +119,7 @@ exports.getLogbookRekap = async (req, res) => {
 // Rekap per bulan atau per tahun
 exports.getLogbookRekapByMonth = async (req, res) => {
   try {
-    const { bulan, tahun } = req.query;
+    const { tahun, bulan, kode_pegawai } = req.query;
 
     if (!tahun) {
       return res.status(400).json({ message: "Tahun wajib diisi" });
@@ -126,8 +128,9 @@ exports.getLogbookRekapByMonth = async (req, res) => {
     let query = `
       SELECT 
         l.logbook_id,
-        l.kode_pegawai,
+        p.kode_pegawai,
         p.nama_pegawai,
+        u.nama_unit,
         l.tahun,
         l.bulan,
         k.id AS kompetensi_id,
@@ -140,6 +143,7 @@ exports.getLogbookRekapByMonth = async (req, res) => {
         COUNT(d.id) AS total_detail
       FROM logbook l
       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+      LEFT JOIN unit u ON p.unit_id = u.unit_id
       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
       JOIN kompetensi k ON d.kompetensi_id = k.id
       WHERE l.status = 1 
@@ -148,17 +152,26 @@ exports.getLogbookRekapByMonth = async (req, res) => {
         AND l.tahun = ?
     `;
 
-    const params = [tahun];
+     const params = [];
 
-    // kalau bulan ada, tambahkan ke query
+    // filter opsional
+    if (tahun) {
+      query += " AND l.tahun = ?";
+      params.push(tahun);
+    }
     if (bulan) {
-      query += ` AND l.bulan = ?`;
+      query += " AND l.bulan = ?";
       params.push(bulan);
     }
+    if (kode_pegawai) {
+      query += " AND p.kode_pegawai = ?";
+      params.push(kode_pegawai);
+    }
+
 
     query += `
       GROUP BY 
-        l.logbook_id, l.kode_pegawai, p.nama_pegawai, l.tahun, l.bulan,
+        l.logbook_id, p.kode_pegawai, p.nama_pegawai, u.nama_unit, l.tahun, l.bulan,
         k.id, k.kategori, k.uraian, k.bobot, k.target_tahun
       ORDER BY l.kode_pegawai ASC, k.id ASC
     `;
@@ -173,7 +186,7 @@ exports.getLogbookRekapByMonth = async (req, res) => {
 // Detail per bulan atau per tahun
 exports.getLogbookDetailByMonth = async (req, res) => {
   try {
-    const { bulan, tahun } = req.query;
+    const { bulan, tahun, kode_pegawai } = req.query;
 
     if (!tahun) {
       return res.status(400).json({ message: "Tahun wajib diisi" });
@@ -182,8 +195,9 @@ exports.getLogbookDetailByMonth = async (req, res) => {
     let query = `
       SELECT 
         l.logbook_id,
-        l.kode_pegawai,
+        p.kode_pegawai,
         p.nama_pegawai,
+        u.nama_unit,
         l.tahun,
         l.bulan,
         d.id AS logbook_detail_id,
@@ -199,6 +213,7 @@ exports.getLogbookDetailByMonth = async (req, res) => {
         d.updated_at
       FROM logbook l
       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+      LEFT JOIN unit u ON p.unit_id = u.unit_id
       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
       JOIN kompetensi k ON d.kompetensi_id = k.id
       WHERE l.status = 1 
@@ -209,14 +224,14 @@ exports.getLogbookDetailByMonth = async (req, res) => {
 
     const params = [tahun];
 
-    // kalau bulan ada → tambahkan filter
+      // kalau bulan ada → tambahkan filter
     if (bulan) {
       query += ` AND l.bulan = ?`;
       params.push(bulan);
     }
 
     query += `
-      ORDER BY l.kode_pegawai ASC, d.id ASC
+      ORDER BY p.kode_pegawai ASC, d.id ASC
     `;
 
     const [rows] = await db.query(query, params);
