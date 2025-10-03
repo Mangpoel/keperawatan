@@ -7,8 +7,8 @@ const { auth, checkRole } = require('../middleware/auth');
 router.post('/', auth, checkRole([1]), pegawaiController.createPegawai);
 router.get('/', auth, checkRole([1]), pegawaiController.getAllPegawai);
 // router.get('/unit/:unitId', auth, checkRole([1]), pegawaiController.getPegawaiByUnit);
-router.get('/:kodePegawai', auth, checkRole([1]), pegawaiController.getPegawaiByKode);
-router.put('/:kodePegawai', auth, checkRole([1]), pegawaiController.updatePegawai);
-router.delete('/:kodePegawai', auth, checkRole([1]), pegawaiController.deletePegawai);
+router.get('/:kode_pegawai', auth, checkRole([1]), pegawaiController.getPegawaiByKode);
+router.put('/:kode_pegawai', auth, checkRole([1]), pegawaiController.updatePegawai);
+router.delete('/:kode_pegawai', auth, checkRole([1]), pegawaiController.deletePegawai);
 
 module.exports = router;

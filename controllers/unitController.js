@@ -18,14 +18,35 @@ exports.createUnit = async (req, res) => {
 };
 
 // READ ALL
+// exports.getAllUnit = async (req, res) => {
+//   try {
+//     const [rows] = await db.query(`SELECT * FROM unit WHERE status = 1`);
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching units", error: err.message });
+//   }
+// };
+
+// READ Semua Unit + Total Pegawai
 exports.getAllUnit = async (req, res) => {
   try {
-    const [rows] = await db.query(`SELECT * FROM unit WHERE status = 1`);
+    const [rows] = await db.query(
+      `SELECT 
+         u.*, 
+         COUNT(p.kode_pegawai) AS total_pegawai
+       FROM unit u
+       LEFT JOIN pegawai p ON u.unit_id = p.unit_id AND p.status = 1
+       WHERE u.status = 1
+       GROUP BY u.unit_id
+       ORDER BY u.nama_unit ASC`
+    );
+
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Error fetching units", error: err.message });
   }
 };
+
 
 // READ ONE
 exports.getUnitById = async (req, res) => {
