@@ -511,22 +511,70 @@ exports.exportLogbookRekapPDF = async (req, res) => {
 
     const [rows] = await db.query(query, params);
 
-    const doc = new PDFDocument({ margin: 30, size: "A4" });
-
+    const doc = new PDFDocument({ margin: 30, size: "A4", layout: "landscape" }); // landscape biar muat tabel lebar
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=logbook_rekap.pdf");
 
     doc.pipe(res);
 
+    // Judul
     doc.fontSize(16).text("Laporan Rekap Logbook", { align: "center" });
-    doc.moveDown();
+    doc.moveDown(2);
 
+    // Header tabel
+    const tableTop = 100;
+    const rowHeight = 20;
+    const colWidths = [40, 50, 70, 100, 80, 80, 120, 50, 50, 50, 60]; 
+    // kolom: No, Tahun, Bulan, Kode Pegawai, Nama, Unit, Uraian, Bobot, Target, Jumlah, Nilai SKP
+    const headers = [
+      "No", "Tahun", "Bulan", "Kode Pegawai", "Nama Pegawai", "Unit",
+      "Uraian", "Bobot", "Target", "Jumlah", "Nilai SKP"
+    ];
+
+    let x = doc.page.margins.left;
+    headers.forEach((h, i) => {
+      doc.font("Helvetica-Bold").fontSize(10).text(h, x, tableTop, { width: colWidths[i], align: "center" });
+      x += colWidths[i];
+    });
+
+    // garis bawah header
+    doc.moveTo(doc.page.margins.left, tableTop + rowHeight - 5)
+       .lineTo(doc.page.width - doc.page.margins.right, tableTop + rowHeight - 5)
+       .stroke();
+
+    // isi data
+    let y = tableTop + rowHeight;
     rows.forEach((row, index) => {
-      doc.fontSize(10).text(
-        `${index + 1}. ${row.tahun}-${row.bulan} | ${row.kode_pegawai} - ${row.nama_pegawai} | ${row.nama_unit}
-         ${row.kategori} - ${row.uraian} | Jumlah: ${row.total_jumlah} | Nilai SKP: ${row.total_nilai_skp} | Bobot: ${row.bobot}`
-      );
-      doc.moveDown(0.5);
+      let x = doc.page.margins.left;
+      const data = [
+        index + 1,
+        row.tahun,
+        row.bulan,
+        row.kode_pegawai,
+        row.nama_pegawai,
+        row.nama_unit,
+        row.uraian,
+        row.bobot,
+        row.target_tahun,
+        row.total_jumlah,
+        row.total_nilai_skp
+      ];
+
+      data.forEach((d, i) => {
+        doc.font("Helvetica").fontSize(9).text(String(d || ""), x, y, {
+          width: colWidths[i],
+          align: "center"
+        });
+        x += colWidths[i];
+      });
+
+      y += rowHeight;
+
+      // auto new page kalau melebihi
+      if (y > doc.page.height - 50) {
+        doc.addPage({ layout: "landscape" });
+        y = tableTop;
+      }
     });
 
     doc.end();
@@ -535,5 +583,8 @@ exports.exportLogbookRekapPDF = async (req, res) => {
     res.status(500).json({ message: "Error exporting rekap PDF", error: err.message });
   }
 };
+
+
+
 
 
