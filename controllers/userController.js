@@ -57,13 +57,27 @@ exports.login = async (req, res) => {
     }
 
     // Ambil data pegawai berdasarkan kode_pegawai user
-    const [pegawaiData] = await db.query(
-      `SELECT p.kode_pegawai, p.nama_pegawai, p.unit_id, u.nama_unit
-       FROM pegawai p
-       LEFT JOIN unit u ON p.unit_id = u.unit_id
-       WHERE p.kode_pegawai = ?`,
-      [user.kode_pegawai]
-    );
+    // const [pegawaiData] = await db.query(
+    //   `SELECT p.kode_pegawai, p.nama_pegawai, p.unit_id, u.nama_unit
+    //    FROM pegawai p
+    //    LEFT JOIN unit u ON p.unit_id = u.unit_id
+    //    WHERE p.kode_pegawai = ?`,
+    //   [user.kode_pegawai]
+    // );
+
+  const [pegawaiData] = await db.query(
+  `SELECT p.kode_pegawai, 
+          p.nama_pegawai, 
+          p.unit_id, 
+          u.nama_unit, 
+          u.kode_kaunit,
+          u.nama_kaunit
+   FROM pegawai p
+   LEFT JOIN unit u ON p.unit_id = u.unit_id
+   WHERE p.kode_pegawai = ?`,
+  [user.kode_pegawai]
+);
+
 
     const pegawai = pegawaiData.length > 0 ? pegawaiData[0] : null;
 
@@ -75,16 +89,20 @@ exports.login = async (req, res) => {
     );
 
     res.json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        kode_pegawai: user.kode_pegawai,
-        pegawai: pegawai, // data dari tabel pegawai
-      },
-    });
+  message: "Login successful",
+  token,
+  user: {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    kode_pegawai: user.kode_pegawai,
+    nama_pegawai: pegawai?.nama_pegawai || null,
+    unit_id: pegawai?.unit_id || null,
+    nama_unit: pegawai?.nama_unit || null,
+    kode_kaunit: pegawai?.kode_kaunit || null, // ✅ tambah
+    nama_kaunit: pegawai?.nama_kaunit || null  // ✅ tambah
+  },
+});
   } catch (err) {
     res.status(500).json({
       message: "Error logging in",

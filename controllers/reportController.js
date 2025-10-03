@@ -1,4 +1,7 @@
 const db = require('../db');
+//expor ke excel
+const ExcelJS = require('exceljs');
+const PDFDocument = require("pdfkit");
 
 // Laporan Logbook + Detail
 exports.getLogbookReport = async (req, res) => {
@@ -241,8 +244,7 @@ exports.getLogbookDetailByMonth = async (req, res) => {
   }
 };
 
-//expor ke excel
-const ExcelJS = require('exceljs');
+
 
 exports.exportLogbookExcel = async (req, res) => {
   try {
@@ -317,7 +319,7 @@ exports.exportLogbookExcel = async (req, res) => {
 
 
 //export ke PDF
-const PDFDocument = require("pdfkit");
+
 
 exports.exportLogbookPDF = async (req, res) => {
   try {
@@ -375,8 +377,6 @@ exports.exportLogbookPDF = async (req, res) => {
   }
 };
 
-// const ExcelJS = require('exceljs');
-// const PDFDocument = require('pdfkit');
 
 // ============================
 // EXPORT REKAP EXCEL
