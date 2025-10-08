@@ -15,11 +15,12 @@ router.get('/rekap/bulanan', auth, checkRole([1, 2, 3]), reportController.getLog
 router.get('/detail/bulanan', auth, checkRole([1, 2, 3]), reportController.getLogbookDetailByMonth);
     
 // Export Detail
-router.get("/export/detail/excel", auth, checkRole([1, 2, 3]), reportController.exportLogbookExcel);
+router.get("/export/detail/excel", reportController.exportLogbookExcel);
 router.get("/export/detail/pdf", auth, checkRole([1, 2, 3]), reportController.exportLogbookPDF);
 
 // Export Rekap
-router.get("/export/rekap/excel",auth, checkRole([1, 2, 3]), reportController.exportLogbookRekapExcel);
+router.get("/export/rekap/excel", reportController.exportLogbookRekapExcel);
+router.get("/export/rekap/excel2", reportController.exportLogbookRekapExcelTahun);
 router.get("/export/rekap/pdf",auth, checkRole([1, 2, 3]), reportController.exportLogbookRekapPDF);
 
 

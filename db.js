@@ -1,33 +1,14 @@
-// const mysql = require('mysql2/promise');
 
-// const db = mysql.createConnection({
-//   host: 'localhost',
-//   user: 'root',   // ganti sesuai user MySQL kamu
-//   password: '',   // ganti sesuai password MySQL kamu
-//   database: 'sistem_keperawatan'
-// });
 
-// db.connect(err => {
-//   if (err) {
-//     console.error('Database connection failed:', err);
-//     return;
-//   }
-//   console.log('Database connected');
-// });
-
-// module.exports = db;
-
-// db.js
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '', // ganti sesuai password MySQL kamu
-  database: 'sistem_keperawatan'
-  // waitForConnections: true,
-  // connectionLimit: 10,
-  // queueLimit: 0
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306
 });
 
 module.exports = db;

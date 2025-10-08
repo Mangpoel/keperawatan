@@ -4,6 +4,59 @@ const ExcelJS = require('exceljs');
 const PDFDocument = require("pdfkit");
 
 // Laporan Logbook + Detail
+// exports.getLogbookReport = async (req, res) => {
+//   try {
+//     const { tahun, bulan, kode_pegawai } = req.query;
+
+//     let sql = `
+//       SELECT 
+//           l.logbook_id,
+//           l.tahun,
+//           l.bulan,
+//           p.kode_pegawai,
+//           p.nama_pegawai,
+//           u.nama_unit,
+//           d.id AS detail_id,
+//           k.kategori,
+//           k.uraian,
+//           d.jumlah,
+//           k.bobot,
+//           d.nilai_skp,
+//           d.status_logbook,
+//           d.created_at AS detail_created
+//       FROM logbook l
+//       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+//       LEFT JOIN unit u ON p.unit_id = u.unit_id
+//       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
+//       LEFT JOIN kompetensi k ON d.kompetensi_id = k.id
+//       WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
+//     `;
+
+//     const params = [];
+
+//     // filter opsional
+//     if (tahun) {
+//       sql += " AND l.tahun = ?";
+//       params.push(tahun);
+//     }
+//     if (bulan) {
+//       sql += " AND l.bulan = ?";
+//       params.push(bulan);
+//     }
+//     if (kode_pegawai) {
+//       sql += " AND p.kode_pegawai = ?";
+//       params.push(kode_pegawai);
+//     }
+
+//     sql += " ORDER BY l.tahun DESC, l.bulan DESC, l.logbook_id, d.created_at";
+
+//     const [rows] = await db.query(sql, params);
+
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 exports.getLogbookReport = async (req, res) => {
   try {
     const { tahun, bulan, kode_pegawai } = req.query;
@@ -19,22 +72,24 @@ exports.getLogbookReport = async (req, res) => {
           d.id AS detail_id,
           k.kategori,
           k.uraian,
+          d.tanggal AS tanggal_kegiatan,
           d.jumlah,
           k.bobot,
           d.nilai_skp,
-          d.status_logbook,
-          d.created_at AS detail_created
+          d.status_logbook
       FROM logbook l
       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
       LEFT JOIN unit u ON p.unit_id = u.unit_id
       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
       LEFT JOIN kompetensi k ON d.kompetensi_id = k.id
-      WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
+      WHERE l.status = 1 
+        AND d.status = 1 
+        AND d.status_logbook = 1
     `;
 
     const params = [];
 
-    // filter opsional
+    // Filter opsional
     if (tahun) {
       sql += " AND l.tahun = ?";
       params.push(tahun);
@@ -48,7 +103,7 @@ exports.getLogbookReport = async (req, res) => {
       params.push(kode_pegawai);
     }
 
-    sql += " ORDER BY l.tahun DESC, l.bulan DESC, l.logbook_id, d.created_at";
+    sql += " ORDER BY l.tahun DESC, l.bulan DESC, d.tanggal DESC";
 
     const [rows] = await db.query(sql, params);
 
@@ -57,6 +112,8 @@ exports.getLogbookReport = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
 
 
 
@@ -245,21 +302,92 @@ exports.getLogbookDetailByMonth = async (req, res) => {
 };
 
 
+//export detail ke excel
+// exports.exportLogbookExcel = async (req, res) => {
+//   try {
+//     const { tahun, bulan, kode_pegawai } = req.query;
+
+//     // ambil data pakai query yg sama dengan getLogbookReport
+//     let sql = `
+//       SELECT 
+//           l.tahun,
+//           l.bulan,
+//           p.kode_pegawai,
+//           p.nama_pegawai,
+//           u.nama_unit,
+//           k.kategori,
+//           k.uraian,
+//           d.jumlah,
+//           k.bobot,
+//           d.nilai_skp
+//       FROM logbook l
+//       JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+//       LEFT JOIN unit u ON p.unit_id = u.unit_id
+//       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
+//       LEFT JOIN kompetensi k ON d.kompetensi_id = k.id
+//       WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
+//     `;
+
+//     const params = [];
+
+//     if (tahun) { sql += " AND l.tahun = ?"; params.push(tahun); }
+//     if (bulan) { sql += " AND l.bulan = ?"; params.push(bulan); }
+//     if (kode_pegawai) { sql += " AND p.kode_pegawai = ?"; params.push(kode_pegawai); }
+
+//     const [rows] = await db.query(sql, params);
+
+//     // buat workbook & worksheet
+//     const workbook = new ExcelJS.Workbook();
+//     const worksheet = workbook.addWorksheet("Logbook Report");
+
+//     // header
+//     worksheet.columns = [
+//       { header: "Tahun", key: "tahun", width: 10 },
+//       { header: "Bulan", key: "bulan", width: 10 },
+//       { header: "Kode Pegawai", key: "kode_pegawai", width: 15 },
+//       { header: "Nama Pegawai", key: "nama_pegawai", width: 20 },
+//       { header: "Unit", key: "nama_unit", width: 20 },
+//       { header: "Kategori", key: "kategori", width: 15 },
+//       { header: "Uraian", key: "uraian", width: 30 },
+//       { header: "Jumlah", key: "jumlah", width: 10 },
+//       { header: "Bobot", key: "bobot", width: 10 },
+//       { header: "Nilai SKP", key: "nilai_skp", width: 15 }
+//     ];
+
+//     // isi data
+//     rows.forEach(row => {
+//       worksheet.addRow(row);
+//     });
+
+//     // set response headers untuk download excel
+//     res.setHeader(
+//       "Content-Type",
+//       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+//     );
+//     res.setHeader("Content-Disposition", "attachment; filename=logbook.xlsx");
+
+//     await workbook.xlsx.write(res);
+//     res.end();
+
+//   } catch (err) {
+//     res.status(500).json({ message: "Error exporting excel", error: err.message });
+//   }
+// };
 
 exports.exportLogbookExcel = async (req, res) => {
   try {
-    const { tahun, bulan, kode_pegawai } = req.query;
+    const { tahun, kode_pegawai } = req.query;
 
-    // ambil data pakai query yg sama dengan getLogbookReport
+    // Query tanpa kolom bulan, dan tambahkan tanggal kegiatan
     let sql = `
       SELECT 
           l.tahun,
-          l.bulan,
           p.kode_pegawai,
           p.nama_pegawai,
           u.nama_unit,
           k.kategori,
           k.uraian,
+          d.tanggal AS tanggal_kegiatan,
           d.jumlah,
           k.bobot,
           d.nilai_skp
@@ -268,59 +396,95 @@ exports.exportLogbookExcel = async (req, res) => {
       LEFT JOIN unit u ON p.unit_id = u.unit_id
       JOIN logbook_detail d ON l.logbook_id = d.logbook_id
       LEFT JOIN kompetensi k ON d.kompetensi_id = k.id
-      WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
+      WHERE l.status = 1 
+        AND d.status = 1 
+        AND d.status_logbook = 1
     `;
 
     const params = [];
 
-    if (tahun) { sql += " AND l.tahun = ?"; params.push(tahun); }
-    if (bulan) { sql += " AND l.bulan = ?"; params.push(bulan); }
-    if (kode_pegawai) { sql += " AND p.kode_pegawai = ?"; params.push(kode_pegawai); }
+    if (tahun) {
+      sql += " AND l.tahun = ?";
+      params.push(tahun);
+    }
+    if (kode_pegawai) {
+      sql += " AND p.kode_pegawai = ?";
+      params.push(kode_pegawai);
+    }
+
+    sql += " ORDER BY p.kode_pegawai, d.tanggal";
 
     const [rows] = await db.query(sql, params);
 
-    // buat workbook & worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Logbook Report");
+    // Hitung total nilai SKP tahunan per pegawai
+    const totalPerPegawai = {};
+    rows.forEach(r => {
+      if (!totalPerPegawai[r.kode_pegawai]) totalPerPegawai[r.kode_pegawai] = 0;
+      totalPerPegawai[r.kode_pegawai] += parseFloat(r.nilai_skp || 0);
+    });
 
-    // header
+    // Buat workbook & worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Logbook Tahunan");
+
+    // Header kolom
     worksheet.columns = [
-      { header: "Tahun", key: "tahun", width: 10 },
-      { header: "Bulan", key: "bulan", width: 10 },
+      // { header: "Tahun", key: "tahun", width: 10 },
+       { header: "Tanggal Kegiatan", key: "tanggal_kegiatan", width: 18 },
       { header: "Kode Pegawai", key: "kode_pegawai", width: 15 },
-      { header: "Nama Pegawai", key: "nama_pegawai", width: 20 },
-      { header: "Unit", key: "nama_unit", width: 20 },
-      { header: "Kategori", key: "kategori", width: 15 },
+      { header: "Nama Pegawai", key: "nama_pegawai", width: 25 },
+      { header: "Unit", key: "nama_unit", width: 20 },     
+      { header: "Kategori", key: "kategori", width: 20 },
       { header: "Uraian", key: "uraian", width: 30 },
       { header: "Jumlah", key: "jumlah", width: 10 },
       { header: "Bobot", key: "bobot", width: 10 },
       { header: "Nilai SKP", key: "nilai_skp", width: 15 }
+      // { header: "Total SKP Tahunan", key: "total_skp_tahunan", width: 20 }
     ];
 
-    // isi data
+    // Isi data per baris
     rows.forEach(row => {
-      worksheet.addRow(row);
+      worksheet.addRow({
+        ...row,
+        total_skp_tahunan: totalPerPegawai[row.kode_pegawai]
+      });
     });
 
-    // set response headers untuk download excel
+    // Format angka
+    worksheet.getColumn('jumlah').numFmt = '#,##0';
+    worksheet.getColumn('bobot').numFmt = '#,##0.00';
+    worksheet.getColumn('nilai_skp').numFmt = '#,##0.00';
+    // worksheet.getColumn('total_skp_tahunan').numFmt = '#,##0.00';
+
+    // Styling header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).alignment = { horizontal: "center" };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD9EAD3' }
+    };
+
+    // Kirim file ke client
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
-    res.setHeader("Content-Disposition", "attachment; filename=logbook.xlsx");
+    res.setHeader("Content-Disposition", "attachment; filename=logbook_tahunan.xlsx");
 
     await workbook.xlsx.write(res);
     res.end();
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error exporting excel", error: err.message });
   }
 };
 
 
+
+
 //export ke PDF
-
-
 exports.exportLogbookPDF = async (req, res) => {
   try {
     const { tahun, bulan, kode_pegawai } = req.query;
@@ -435,7 +599,7 @@ exports.exportLogbookRekapExcel = async (req, res) => {
       { header: "Uraian", key: "uraian", width: 30 },
       { header: "Bobot", key: "bobot", width: 10 },
       { header: "Target Tahun", key: "target_tahun", width: 15 },
-      { header: "Total Jumlah", key: "total_jumlah", width: 15 },
+      { header: "Total Jumlah Pasien", key: "total_jumlah", width: 15 },
       { header: "Total Nilai SKP", key: "total_nilai_skp", width: 20 },
       { header: "Keterangan", key: "keterangan", width: 20 }
     ];
@@ -467,6 +631,105 @@ exports.exportLogbookRekapExcel = async (req, res) => {
     res.status(500).json({ message: "Error exporting rekap excel", error: err.message });
   }
 };
+
+exports.exportLogbookRekapExcelTahun = async (req, res) => {
+  try {
+    const { tahun, kode_pegawai } = req.query;
+
+    let query = `
+      SELECT 
+        l.tahun,
+        p.kode_pegawai,
+        p.nama_pegawai,
+        u.nama_unit,
+        k.kategori,
+        k.uraian,
+        k.bobot,
+        k.target_tahun,
+        COALESCE(SUM(d.jumlah), 0) AS total_jumlah,
+        COALESCE(SUM(d.jumlah * k.bobot), 0) AS total_nilai_skp,
+        IF(COALESCE(SUM(d.jumlah * k.bobot), 0) < COALESCE(k.target_tahun, 0), 'Tidak Lulus', 'Lulus') AS keterangan
+      FROM logbook l
+      JOIN pegawai p ON l.kode_pegawai = p.kode_pegawai
+      LEFT JOIN unit u ON p.unit_id = u.unit_id
+      JOIN logbook_detail d ON l.logbook_id = d.logbook_id
+      JOIN kompetensi k ON d.kompetensi_id = k.id
+      WHERE l.status = 1 AND d.status = 1 AND d.status_logbook = 1
+    `;
+
+    const params = [];
+    if (tahun) { query += " AND l.tahun = ?"; params.push(tahun); }
+    if (kode_pegawai) { query += " AND p.kode_pegawai = ?"; params.push(kode_pegawai); }
+
+    query += `
+      GROUP BY 
+        l.tahun, p.kode_pegawai, p.nama_pegawai, u.nama_unit,
+        k.kategori, k.uraian, k.bobot, k.target_tahun
+      ORDER BY p.kode_pegawai, k.kategori
+    `;
+
+    const [rows] = await db.query(query, params);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Rekap Nilai SKP");
+
+    worksheet.columns = [
+      { header: "Tahun", key: "tahun", width: 10 },
+      { header: "Kode Pegawai", key: "kode_pegawai", width: 15 },
+      { header: "Nama Pegawai", key: "nama_pegawai", width: 25 },
+      { header: "Unit", key: "nama_unit", width: 20 },
+      { header: "Kategori", key: "kategori", width: 15 },
+      { header: "Uraian", key: "uraian", width: 35 },
+      { header: "Bobot", key: "bobot", width: 10 },
+      { header: "Target Tahun", key: "target_tahun", width: 15 },
+      { header: "Total Jumlah Pasien", key: "total_jumlah", width: 15 },
+      { header: "Total Nilai SKP", key: "total_nilai_skp", width: 20 },
+      { header: "Keterangan", key: "keterangan", width: 15 },
+    ];
+
+    rows.forEach(r => {
+      r.bobot = r.bobot ? parseFloat(r.bobot) : 0;
+      r.total_jumlah = r.total_jumlah ? parseFloat(r.total_jumlah) : 0;
+      r.total_nilai_skp = r.total_nilai_skp ? parseFloat(r.total_nilai_skp) : 0;
+      worksheet.addRow(r);
+    });
+
+    // Style header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+
+    // Tambahkan border & rata tengah untuk semua sel
+    worksheet.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.alignment = { vertical: "middle", wrapText: true };
+      });
+    });
+
+    // Format angka
+    worksheet.getColumn('bobot').numFmt = '#,##0.00';
+    worksheet.getColumn('total_nilai_skp').numFmt = '#,##0.00';
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", "attachment; filename=rekap_nilai_skp.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error exporting rekap excel", error: err.message });
+  }
+};
+
 
 
 // ============================
