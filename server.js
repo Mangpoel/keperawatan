@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const licenseMiddleware = require("./middleware/license");
 
 const unitRoutes = require('./routes/unitRoutes');
 const pegawaiRoutes = require('./routes/pegawaiRoutes');
@@ -16,8 +16,9 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
-app.use(licenseMiddleware);
+const licenseMiddleware = require("./middleware/license");
 
+app.use(licenseMiddleware);
 
 // Register routes
 app.use('/api/unit', unitRoutes);
@@ -30,7 +31,7 @@ app.use("/api/report", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 
-require('dotenv').config();
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
