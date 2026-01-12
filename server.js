@@ -13,9 +13,22 @@ const reportRoutes = require("./routes/reportRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
-app.use(cors());
+// Configure CORS explicitly so preflight (OPTIONS) is handled properly
+const corsOptions = {
+  origin: process.env.CLIENT_ORIGIN || `https://${process.env.LICENSE_DOMAIN || 'app.example.com'}`,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+// respond to preflight requests for all routes
+app.options('*', cors(corsOptions));
+
 app.use(bodyParser.json());
 app.use(express.json());
+// License check after CORS so preflight is not blocked by license calls
 app.use(licenseMiddleware);
 
 
