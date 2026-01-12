@@ -25,7 +25,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 // respond to preflight requests for all routes
-app.options('*', cors(corsOptions));
+// Global preflight handler to avoid Express path parsing issues
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', corsOptions.origin);
+    res.header('Access-Control-Allow-Methods', corsOptions.methods.join(','));
+    res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
+    if (corsOptions.credentials) res.header('Access-Control-Allow-Credentials', 'true');
+    return res.sendStatus(corsOptions.optionsSuccessStatus || 204);
+  }
+  next();
+});
 
 app.use(bodyParser.json());
 app.use(express.json());
