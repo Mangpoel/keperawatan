@@ -376,12 +376,13 @@ exports.getLogbookDetailByMonth = async (req, res) => {
 
 exports.exportLogbookExcel = async (req, res) => {
   try {
-    const { tahun, kode_pegawai } = req.query;
+    const { tahun, bulan, kode_pegawai } = req.query;
 
     // Query tanpa kolom bulan, dan tambahkan tanggal kegiatan
     let sql = `
       SELECT 
           l.tahun,
+          l.bulan,
           p.kode_pegawai,
           p.nama_pegawai,
           u.nama_unit,
@@ -407,6 +408,10 @@ exports.exportLogbookExcel = async (req, res) => {
       sql += " AND l.tahun = ?";
       params.push(tahun);
     }
+    if (bulan) {
+      sql += " AND l.bulan = ?";
+      params.push(bulan);
+    }
     if (kode_pegawai) {
       sql += " AND p.kode_pegawai = ?";
       params.push(kode_pegawai);
@@ -425,7 +430,7 @@ exports.exportLogbookExcel = async (req, res) => {
 
     // Buat workbook & worksheet
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Logbook Tahunan");
+    const worksheet = workbook.addWorksheet("Logbook");
 
     // Header kolom
     worksheet.columns = [

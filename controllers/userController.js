@@ -111,13 +111,46 @@ exports.login = async (req, res) => {
   }
 };
 
-// ambil data user
+// // ambil data user
+// exports.getAllUser = async (req, res) => {
+//   try {
+//     const [rows] = await db.query(`SELECT * FROM user WHERE status = 1`);
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching units", error: err.message });
+//   }
+// };
+
+// GET semua user aktif dengan relasi ke pegawai
 exports.getAllUser = async (req, res) => {
   try {
-    const [rows] = await db.query(`SELECT * FROM user WHERE status = 1`);
+    const sql = `
+      SELECT 
+        u.id,
+        u.username,
+        u.role,
+        u.status,
+        u.kode_pegawai,
+        p.nama_pegawai,
+        
+        p.unit_id,
+        u.created_at,
+        u.updated_at
+      FROM user u
+      LEFT JOIN pegawai p ON u.kode_pegawai = p.kode_pegawai
+      WHERE u.status = 1
+      ORDER BY p.nama_pegawai ASC
+    `;
+
+    const [rows] = await db.query(sql);
+
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching units", error: err.message });
+    console.error("Error fetching users:", err);
+    res.status(500).json({ 
+      message: "Terjadi kesalahan saat mengambil data user", 
+      error: err.message 
+    });
   }
 };
 
